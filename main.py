@@ -2,10 +2,15 @@ import asyncio
 import datetime
 
 import aiofiles
+import configargparse
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 async def main():
-    reader, _ = await asyncio.open_connection("minechat.dvmn.org", 5000)
+    reader, _ = await asyncio.open_connection(args.host, args.port)
     while True:
         data = await reader.readuntil(separator=b"\n")
         current_time = datetime.datetime.now()
@@ -16,4 +21,13 @@ async def main():
             )
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    parser = configargparse.ArgParser(
+        auto_env_var_prefix="CHAT_",
+    )
+    parser.add("--host", default="minechat.dvmn.org", help="Hostname")
+    parser.add("--port", default=5000, help="Port")
+    parser.add("--logfile", default="chat_log.txt", help="Log file")
+    args = parser.parse_args()
+    print(args)
+    asyncio.run(main())
