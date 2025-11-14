@@ -8,9 +8,8 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("based")
 
+logger = logging.getLogger("based")
 
 async def main():
     reader, _ = await asyncio.open_connection(args.host, args.port)
@@ -27,6 +26,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    logger.setLevel(logging.INFO)
     parser = configargparse.ArgParser(
         auto_env_var_prefix="CHAT_",
     )
