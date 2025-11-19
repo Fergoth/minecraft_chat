@@ -2,10 +2,10 @@ import asyncio
 import json
 import logging
 
-logger = logging.getLogger('chat_writer')
+logger = logging.getLogger("chat_writer")
 
 
-async def create_account(nickname : str) -> str:
+async def create_account(nickname: str) -> str:
     reader, writer = await asyncio.open_connection("minechat.dvmn.org", 5050)
     response = await reader.readline()
     logger.debug(response.decode().strip())

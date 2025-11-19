@@ -11,6 +11,7 @@ load_dotenv()
 
 logger = logging.getLogger("based")
 
+
 async def main():
     reader, _ = await asyncio.open_connection(args.host, args.port)
     while True:

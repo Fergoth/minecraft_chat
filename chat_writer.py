@@ -2,7 +2,8 @@ import asyncio
 import logging
 from register import create_account
 
-logger = logging.getLogger('chat_writer')
+logger = logging.getLogger("chat_writer")
+
 
 async def main():
     if get_local_hash() is None:
