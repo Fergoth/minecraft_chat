@@ -6,7 +6,7 @@
 Утилита read_message.py читает сообщения из чата и пишет их в лог
 
 ## Окружение
-В .env файле репозитория есть примеры переменных окружения!
+**В .env файле репозитория есть примеры переменных окружения!**
 Так же можно передавать переменные как параметры скрипта и они перезапишут переменные окружения
 
 ## Установка
@@ -40,7 +40,7 @@ uv run main.py --host minechat.dvmn.org --port 5000 --logfile yourlog.txt
 ### параметры запуска скрипта send_message.py
 Или .env файл c начинающихся с SEND (смотри пример в .env файле)
 
-```
+
 --message", default="ТЕСТОВОЕ_СООБЩЕНИЕ" Сообщение для отправки  **Обязательный аргумент**
 --host default="minechat.dvmn.org" Хост подключения к чату
 
@@ -51,7 +51,7 @@ uv run main.py --host minechat.dvmn.org --port 5000 --logfile yourlog.txt
 --nickname", default=None Имя пользователя для регистрации **Используется только если нет пользовательского хэша**
 
 --token", default=None Токен пользователя. Если не указан ищем в --hash_filename
-```
+
 ### Пример запуска скрипта send_message.py
 ```sh
 python send_message.py --host minechat.dvmn.org --port 5000 --hash_filename yourhash.txt --message hello_world
