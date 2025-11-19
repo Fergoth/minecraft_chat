@@ -1,41 +1,55 @@
 import asyncio
 import json
 import logging
-from dataclasses import dataclass, asdict
+
+import configargparse
+from dotenv import load_dotenv
 
 from authorize import InvalidHash, authorize
 from register import create_account
 
+load_dotenv()
 logger = logging.getLogger("chat_writer")
 
 
-@dataclass
-class Account:
-    nickname: str
-    account_hash: str
+def save_local_hash(filename: str, hash: str):
+    with open(filename, "w") as f:
+        json.dump(hash, f)
+    logger.info(f"Хеш сохранен в {filename}")
 
 
-async def submit_message(reader, writer):
-    new_message = input().strip().replace("\n", "")
-    writer.write(new_message.encode() + b"\n")
+def load_hash_from_file(filename: str) -> str:
+    with open(filename, "r") as f:
+        return json.load(f)
+
+
+async def submit_message(
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter, message: str
+):
+    message = message.strip().replace("\n", "").encode() + b"\n\n"
+    writer.write(message)
     await writer.drain()
-    message = await reader.readline()
-    logger.info(message.decode())
-
+    logger.info(f"Отправлено сообщение: {message}")
 
 async def main():
+    if args.token is not None:
+        hash = args.token
+    else:
+        try:
+            hash = load_hash_from_file(args.hash_filename)
+        except FileNotFoundError:
+            logger.info("Сохраненный хеш не найден, регистрируем пользователя")
+            hash = await create_account(args.host, args.port, nickname=args.nickname)
+        except json.JSONDecodeError:
+            logging.error(
+                "Невалидный json в local_account.txt, удалите файл и перепройдите регистрацию"
+            )
+            return
+    save_local_hash(args.hash_filename, hash)
+    logger.debug(f"Текущий хэш: {hash}")
     try:
-        account: Account = get_local_account()
-    except FileNotFoundError:
-        account: Account = Account(**await create_account())
-        save_local_hash(account)
-    except json.JSONDecodeError:
-        logging.error("Невалидный json в local_account.txt, удалите файл и перепройдите регистрацию")
-    logger.debug(f"Текущий хэш: {account.account_hash}")
-    try:
-        reader, writer = await authorize(account.account_hash)
-        while True:
-            await submit_message(reader, writer)
+        reader, writer = await authorize(args.host, args.port, hash)
+        await submit_message(reader, writer, args.message)
     except InvalidHash as e:
         logging.error(e)
         return
@@ -44,20 +58,29 @@ async def main():
         await writer.wait_closed()
 
 
-def get_local_account() -> Account:
-    with open("local_account.txt", "r") as f:
-        return Account(**json.load(f))
-
-
-def save_local_hash(account: Account):
-    with open("local_account.txt", "w") as f:
-        json.dump(asdict(account), f)
-
-
 if __name__ == "__main__":
     handler = logging.StreamHandler()
     formater = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formater)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
+
+    parser = configargparse.ArgParser(
+        auto_env_var_prefix="SEND_",
+    )
+    parser.add("--message", help="Сообщения для отправления", required=True)
+    parser.add("--host", default="minechat.dvmn.org", help="Хост")
+    parser.add("--port", default=5050, help="Порт")
+    parser.add(
+        "--token",
+        default=None,
+        help="Токен пользователя. Если не указан ищем в --hash_filename",
+    )
+    parser.add("--nickname", default=None, help="Имя пользователя для регистрации")
+    parser.add(
+        "--hash_filename", default="local_account.txt", help="Файл для хранения хеша"
+    )
+    args = parser.parse_args()
+    logger.debug(f"{args}")
+
     asyncio.run(main())
