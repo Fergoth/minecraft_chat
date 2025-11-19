@@ -5,16 +5,22 @@ import logging
 logger = logging.getLogger("chat_writer")
 
 
-async def create_account(nickname: str) -> str:
+async def create_account(nickname: str = None) -> str:
     reader, writer = await asyncio.open_connection("minechat.dvmn.org", 5050)
+    # Запрос на имя пользователя
     response = await reader.readline()
-    logger.debug(response.decode().strip())
+    logger.debug(response.decode())
+    # Оставляем пустым чтобы ввести имя пользователя вместо хэша
     writer.write(b"\n")
     await writer.drain()
 
     response = await reader.readline()
     logger.debug(response.decode())
-    writer.write(nickname.strip().replace("\n", " ").encode() + b"\n")
+    if nickname is not None:
+        writer.write(nickname.strip().replace("\n", " ").encode() + b"\n")
+    else:
+        input_nickname = input("Enter your nickname: ")
+        writer.write(input_nickname.strip().replace("\n", " ").encode() + b"\n")
     await writer.drain()
 
     response = await reader.readline()
@@ -26,7 +32,7 @@ async def create_account(nickname: str) -> str:
 
 
 async def main():
-    account_hash = await create_account()
+    account_hash = await create_account('fergoth')
     logger.debug(account_hash)
 
 
