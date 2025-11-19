@@ -28,12 +28,12 @@ async def create_account(nickname: str = None) -> str:
 
     writer.close()
     await writer.wait_closed()
-    return json.loads(response)["account_hash"]
+    return json.loads(response)
 
 
 async def main():
-    account_hash = await create_account('fergoth')
-    logger.debug(account_hash)
+    nickname = input("Enter your nickname: ")
+    await create_account(nickname)
 
 
 if __name__ == "__main__":
