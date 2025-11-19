@@ -9,8 +9,8 @@ class InvalidHash(Exception):
     pass
 
 
-async def authorize(account_hash: str) -> str:
-    reader, writer = await asyncio.open_connection("minechat.dvmn.org", 5050)
+async def authorize(host: str, port: int, account_hash: str) -> str:
+    reader, writer = await asyncio.open_connection(host, port)
     response = await reader.readline()
     writer.write(account_hash.encode() + b"\n")
     await writer.drain()
@@ -21,9 +21,11 @@ async def authorize(account_hash: str) -> str:
     if decoded_response is None:
         writer.close()
         await writer.wait_closed()
-        raise InvalidHash("Неизвестный токен. Проверьте его или зарегистрируйте заново.")
+        raise InvalidHash(
+            "Неизвестный токен. Проверьте его или зарегистрируйте заново."
+        )
     response = await reader.readline()
-    logger.debug(response.decode())
+    logger.debug(response)
     return reader, writer
 
 
