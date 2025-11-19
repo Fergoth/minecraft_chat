@@ -1,35 +1,57 @@
 import asyncio
+import json
 import logging
+from dataclasses import dataclass, asdict
+
+from authorize import InvalidHash, authorize
 from register import create_account
 
 logger = logging.getLogger("chat_writer")
 
 
+@dataclass
+class Account:
+    nickname: str
+    account_hash: str
+
+
+async def submit_message(reader, writer):
+    new_message = input().strip().replace("\n", "")
+    writer.write(new_message.encode() + b"\n")
+    await writer.drain()
+    message = await reader.readline()
+    logger.info(message.decode())
+
+
 async def main():
-    if get_local_hash() is None:
-        nickname = input("Enter your nickname: ")
-        hash = await create_account(nickname)
-        save_local_hash(hash)
-    logger.debug(f"Local hash: {hash}")
-    reader, writer = await asyncio.open_connection("minechat.dvmn.org", 5050)
     try:
+        account: Account = get_local_account()
+    except FileNotFoundError:
+        account: Account = Account(**await create_account())
+        save_local_hash(account)
+    except json.JSONDecodeError:
+        logging.error("Невалидный json в local_account.txt, удалите файл и перепройдите регистрацию")
+    logger.debug(f"Текущий хэш: {account.account_hash}")
+    try:
+        reader, writer = await authorize(account.account_hash)
         while True:
-            new_message = input().strip().replace("\n", "")
-            writer.write(new_message.encode() + b"\n")
-            await writer.drain()
-            await reader.readline()
-            logger.info(await reader.readline().decode())
+            await submit_message(reader, writer)
+    except InvalidHash as e:
+        logging.error(e)
+        return
     finally:
         writer.close()
         await writer.wait_closed()
 
 
-def get_local_hash():
-    pass
+def get_local_account() -> Account:
+    with open("local_account.txt", "r") as f:
+        return Account(**json.load(f))
 
 
-def save_local_hash(hash):
-    pass
+def save_local_hash(account: Account):
+    with open("local_account.txt", "w") as f:
+        json.dump(asdict(account), f)
 
 
 if __name__ == "__main__":
