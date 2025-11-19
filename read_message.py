@@ -28,7 +28,7 @@ async def main():
 if __name__ == "__main__":
     logger.setLevel(logging.INFO)
     parser = configargparse.ArgParser(
-        auto_env_var_prefix="CHAT_",
+        auto_env_var_prefix="READ_",
     )
     parser.add("--host", default="minechat.dvmn.org", help="Hostname")
     parser.add("--port", default=5000, help="Port")

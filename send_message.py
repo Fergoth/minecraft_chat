@@ -31,6 +31,7 @@ async def submit_message(
     await writer.drain()
     logger.info(f"Отправлено сообщение: {message}")
 
+
 async def main():
     if args.token is not None:
         hash = args.token
