@@ -17,11 +17,11 @@ async def main():
         data = await reader.readuntil(separator=b"\n")
         current_time = datetime.datetime.now()
         logger.debug(
-            f"[{current_time.strftime('%d.%m.%y %H:%M')}] {data.decode()}", end=""
+            f"[{current_time.strftime("%d.%m.%y %H:%M")}] {data.decode()}", end=""
         )
         async with aiofiles.open(f"{args.logfile}", mode="a") as f:
             await f.write(
-                f"[{current_time.strftime('%d.%m.%y %H:%M')}] {data.decode()}"
+                f"[{current_time.strftime("%d.%m.%y %H:%M")}] {data.decode()}"
             )
 
 
