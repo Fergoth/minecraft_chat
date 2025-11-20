@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 
-import configargparse
+import configargparse  # type: ignore
 from dotenv import load_dotenv
 
 from authorize import InvalidHash, authorize
@@ -26,8 +26,8 @@ def load_hash_from_file(filename: str) -> str:
 async def submit_message(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter, message: str
 ):
-    message = message.strip().replace("\n", "").encode() + b"\n\n"
-    writer.write(message)
+    encoded_message = message.strip().replace("\n", "").encode() + b"\n\n"
+    writer.write(encoded_message)
     await writer.drain()
     logger.info(f"Отправлено сообщение: {message}")
 
