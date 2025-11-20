@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 from authorize import InvalidHash, authorize
 from register import create_account
+from utilities import open_async_connection
+
 
 load_dotenv()
 logger = logging.getLogger("chat_writer")
@@ -40,7 +42,7 @@ async def main():
             hash = load_hash_from_file(args.hash_filename)
         except FileNotFoundError:
             logger.info("Сохраненный хеш не найден, регистрируем пользователя")
-            hash = await create_account(args.host, args.port, nickname=args.nickname)
+            hash = await create_account(args.host, args.port, args.nickname)
         except json.JSONDecodeError:
             logging.error(
                 "Невалидный json в local_account.txt, удалите файл и перепройдите регистрацию"
@@ -48,15 +50,13 @@ async def main():
             return
     save_local_hash(args.hash_filename, hash)
     logger.debug(f"Текущий хэш: {hash}")
-    try:
-        reader, writer = await authorize(args.host, args.port, hash)
-        await submit_message(reader, writer, args.message)
-    except InvalidHash as e:
-        logging.error(e)
-        return
-    finally:
-        writer.close()
-        await writer.wait_closed()
+    async with open_async_connection(args.host, args.port) as (reader, writer):
+        try:
+            await authorize(reader, writer, hash)
+            await submit_message(reader, writer, args.message)
+        except InvalidHash as e:
+            logger.error(e)
+            return
 
 
 if __name__ == "__main__":

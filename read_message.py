@@ -2,9 +2,11 @@ import asyncio
 import datetime
 import logging
 
-import aiofiles
-import configargparse
+import aiofiles  # type: ignore
+import configargparse  # type: ignore
 from dotenv import load_dotenv
+
+from utilities import open_async_connection
 
 load_dotenv()
 
@@ -12,17 +14,17 @@ logger = logging.getLogger("based")
 
 
 async def main():
-    reader, _ = await asyncio.open_connection(args.host, args.port)
-    while True:
-        data = await reader.readuntil(separator=b"\n")
-        current_time = datetime.datetime.now()
-        logger.debug(
-            f"[{current_time.strftime("%d.%m.%y %H:%M")}] {data.decode()}", end=""
-        )
-        async with aiofiles.open(f"{args.logfile}", mode="a") as f:
-            await f.write(
-                f"[{current_time.strftime("%d.%m.%y %H:%M")}] {data.decode()}"
+    async with open_async_connection(args.host, args.port) as (reader, writer):
+        while True:
+            data = await reader.readuntil(separator=b"\n")
+            current_time = datetime.datetime.now()
+            logger.debug(
+                f"[{current_time.strftime('%d.%m.%y %H:%M')}] {data.decode()}", end=""
             )
+            async with aiofiles.open(f"{args.logfile}", mode="a") as f:
+                await f.write(
+                    f"[{current_time.strftime('%d.%m.%y %H:%M')}] {data.decode()}"
+                )
 
 
 if __name__ == "__main__":
