@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 
+from utilities import open_async_connection
+
 logger = logging.getLogger("chat_writer")
 
 
@@ -9,8 +11,9 @@ class InvalidHash(Exception):
     pass
 
 
-async def authorize(host: str, port: int, account_hash: str) -> str:
-    reader, writer = await asyncio.open_connection(host, port)
+async def authorize(
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter, account_hash: str
+) -> None:
     response = await reader.readline()
     writer.write(account_hash.encode() + b"\n")
     await writer.drain()
@@ -26,19 +29,18 @@ async def authorize(host: str, port: int, account_hash: str) -> str:
         )
     response = await reader.readline()
     logger.debug(response)
-    return reader, writer
 
 
 async def main():
     hash = input("Введите account_hash: ")
-    try:
-        reader, writer = await authorize(hash)
-    except InvalidHash as e:
-        logging.error(e)
-        return
-    finally:
-        writer.close()
-        await writer.wait_closed()
+    host = input("Введите host: ")
+    port = int(input("Введите port: "))
+    async with open_async_connection(host, port) as (reader, writer):
+        try:
+            await authorize(hash)
+        except InvalidHash as e:
+            logging.error(e)
+            return
 
 
 if __name__ == "__main__":
